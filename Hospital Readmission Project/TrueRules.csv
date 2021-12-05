@@ -1,0 +1,2 @@
+,antecedents,consequents,antecedent support,consequent support,support,confidence,lift,leverage,conviction
+33,frozenset({'discharge_disposition_id_Not Expired'}),frozenset({'readmitted_Yes'}),0.9807173958117354,0.3886585113000207,0.3886585113000207,0.39630021141649047,1.019661733615222,0.007494348237798432,1.0126581129577663

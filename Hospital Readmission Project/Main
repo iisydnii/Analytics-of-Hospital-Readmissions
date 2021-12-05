@@ -1,0 +1,73 @@
+import pandas as pd
+import numpy as np
+
+from pandas import read_csv
+from Data_Processing import ProcessingUtility
+from Exploratory_Analytics import AnalyticsUtility
+from Rule_Association import RuleLearningUtility
+from Predictive_Analytics import PredictiveUtility
+
+url = "https://raw.githubusercontent.com/iisydnii/Analytics-of-Hospital-Readmissions/main/10kPatients.csv"
+dataset = pd.read_csv(url)
+
+#Print preview of dataframe
+print("Checking data")
+print(dataset.head())
+
+print('\nPart 1: \n')
+#Part 1
+data_processing = ProcessingUtility()
+dataset = data_processing.setMissingValuesToNaN(dataset)
+
+dataset = data_processing.setNaNValuesOfCol(dataset, 'race', 'Other')
+[isNaNperCol, percentageNaN] = data_processing.getNaNStats(dataset)
+#Drop colums with 50% or more in missing values and diag_1, diag_2, diag_3 (Incorrect values)
+dataset = data_processing.dropDirtyCols(dataset, ['max_glu_serum', 'A1Cresult'])
+#Impute Missing values
+dataset = data_processing.imputeMissingValues(dataset, 3, [ 'admission_type_id', 'discharge_disposition_id', 'admission_source_id','number_diagnoses' ])
+#Trim the outliers
+cleanDataFrame = data_processing.trim(dataset, 4)
+
+#check data after cleaning
+print(cleanDataFrame)
+data_processing.getNaNStats(cleanDataFrame)
+cleanDataFrame.to_csv('cleanDataFrame.csv')
+
+print('\nExploring Analytics - Part 2: \n')
+#Exploring Analytics - Part 2
+exploratory_analytics = AnalyticsUtility()
+exploratory_analytics.plotReadmitts(cleanDataFrame)
+exploratory_analytics.plotDiabetesMeds(cleanDataFrame)
+exploratory_analytics.plotPassedPatients(cleanDataFrame)
+exploratory_analytics.plotDemographics(cleanDataFrame)
+
+#Part 3
+print('\nPart 3: \n')
+learning_rules = RuleLearningUtility()
+rules = learning_rules.getPatterns(cleanDataFrame)
+rules.to_csv('AllRules.csv')
+
+
+
+print("\n Rules - readmitted_Yes:")     
+readmittedRules_1 = rules[rules["consequents"].apply(lambda x: 'readmitted_Yes' in str(x))]
+print(readmittedRules_1.head())
+readmittedRules_1.to_csv('TrueRules.csv')
+
+print("\n Rules - readmitted_No:")  
+readmittedRules_0 = rules[rules["consequents"].apply(lambda x: 'readmitted_No' in str(x))]
+print(readmittedRules_0.head())
+readmittedRules_0.to_csv('FalseRules.csv')
+
+### Comment and uncomment depending if you want the rules or predictive analytics for performance
+# print("\n Rules - Expired:")  
+# readmittedRules_0 = rules[rules["consequents"].apply(lambda x: 'discharge_disposition_id_Expired' in str(x))]
+# print(readmittedRules_0.head())
+# readmittedRules_0.to_csv('ExpiredRules.csv')
+
+#Part 4
+print('\nPart 4: \n')
+predictive_analytics = PredictiveUtility()
+encodedData = data_processing.encodeForModeling(cleanDataFrame)
+predictive_analytics.predict(encodedData)
+
